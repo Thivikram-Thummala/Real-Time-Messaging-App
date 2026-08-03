@@ -1,6 +1,6 @@
-# ⚡ Distributed Real-Time Chat System
+# ⚡  Real-Time Chat System
 
-A high-performance, scalable distributed real-time chat application built with **React**, **Node.js (Express & Socket.io)**, and **PostgreSQL**. Featuring dark mode glassmorphism UI, dual-channel REST & WebSocket event flows, multi-room channels, typing indicators, user search, and high-concurrency load testing suites.
+A high-performance, scalable real-time chat application built with **React**, **Node.js (Express & Socket.io)**, and **PostgreSQL**. Featuring dark mode glassmorphism UI, dual-channel REST & WebSocket event flows, multi-room channels, typing indicators, user search, and high-concurrency load testing suites.
 
 ---
 
