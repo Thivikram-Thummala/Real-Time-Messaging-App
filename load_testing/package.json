@@ -1,0 +1,17 @@
+{
+  "name": "chat-load-tests",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "test:1000": "node run_1000_sockets.js",
+    "test:e2e": "node run_e2e_msg_test.js",
+    "artillery:socketio": "artillery run artillery-socketio.yml",
+    "artillery:http": "artillery run artillery-http.yml"
+  },
+  "dependencies": {
+    "socket.io-client": "^4.8.1"
+  },
+  "devDependencies": {
+    "artillery": "^2.0.21"
+  }
+}

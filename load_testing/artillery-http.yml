@@ -1,0 +1,19 @@
+config:
+  target: "http://localhost:3001"
+  phases:
+    - duration: 30
+      arrivalRate: 10
+      rampTo: 50
+      name: "Ramp up HTTP REST API requests to 1,000 total calls"
+  defaults:
+    headers:
+      Authorization: "Bearer LOAD_TEST_BYPASS"
+      Content-Type: "application/json"
+
+scenarios:
+  - name: "Send Chat Message REST API Load"
+    flow:
+      - post:
+          url: "/api/v1/rooms/00000000-0000-0000-0000-000000000000/messages"
+          json:
+            content: "Artillery load test message"

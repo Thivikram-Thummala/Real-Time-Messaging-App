@@ -1,0 +1,36 @@
+config:
+  target: "http://localhost:3001"
+  engines:
+    socketio:
+      transports: ["websocket"]
+  phases:
+    - duration: 30
+      arrivalRate: 20
+      rampTo: 100
+      name: "Ramp up to 1,000 Socket Connections"
+  defaults:
+    headers:
+      authorization: "Bearer LOAD_TEST_BYPASS"
+
+scenarios:
+  - name: "Real-time Chat Socket User"
+    engine: socketio
+    flow:
+      - connect:
+          query:
+            token: "LOAD_TEST_BYPASS"
+          options:
+            auth:
+              token: "LOAD_TEST_BYPASS"
+            query:
+              token: "LOAD_TEST_BYPASS"
+      - emit:
+          channel: "room:join"
+          data:
+            roomId: "00000000-0000-0000-0000-000000000000"
+      - think: 5
+      - emit:
+          channel: "typing:start"
+          data:
+            roomId: "00000000-0000-0000-0000-000000000000"
+      - think: 5
