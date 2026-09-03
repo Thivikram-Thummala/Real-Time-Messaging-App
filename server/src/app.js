@@ -12,6 +12,8 @@ import messagesRoutes from './modules/messages/messages.routes.js';
 import mediaRoutes from './modules/media/media.routes.js';
 import usersRoutes from './modules/users/users.routes.js';
 
+const app = express();
+
 const getCorsOrigin = () => {
   if (!config.CORS_ORIGIN || config.CORS_ORIGIN === '*') {
     return true;
