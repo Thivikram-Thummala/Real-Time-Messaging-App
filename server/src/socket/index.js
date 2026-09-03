@@ -5,6 +5,8 @@ import { handleConnection } from './handlers/connection.js';
 import { handleRoomEvents } from './handlers/room.js';
 import { handleTypingEvents } from './handlers/typing.js';
 
+let io;
+
 // initialize the socket server instance using http server(we created in app.ts)
 export const initSocketServer = (server) => {
   io = new Server(server, {
