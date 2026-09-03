@@ -1,4 +1,4 @@
-export const SERVER_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+export const SERVER_URL = import.meta.env.VITE_API_URL || 'https://sharepulse-backend.onrender.com';
 
 export function getAuthHeader() {
   const token = localStorage.getItem('chat_jwt_token');
@@ -7,14 +7,14 @@ export function getAuthHeader() {
 
 export async function request(endpoint, options = {}) {
   const url = `${SERVER_URL}${endpoint}`;
-  
+
   const isFormData = options.body instanceof FormData;
-  
+
   const headers = {
     ...getAuthHeader(),
     ...options.headers
   };
-  
+
   if (!isFormData && !headers['Content-Type']) {
     headers['Content-Type'] = 'application/json';
   }

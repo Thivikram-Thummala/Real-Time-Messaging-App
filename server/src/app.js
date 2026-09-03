@@ -12,10 +12,16 @@ import messagesRoutes from './modules/messages/messages.routes.js';
 import mediaRoutes from './modules/media/media.routes.js';
 import usersRoutes from './modules/users/users.routes.js';
 
-const app = express();
+const getCorsOrigin = () => {
+  if (!config.CORS_ORIGIN || config.CORS_ORIGIN === '*') {
+    return true;
+  }
+  const origins = config.CORS_ORIGIN.split(',').map(o => o.trim());
+  return origins.length === 1 ? origins[0] : origins;
+};
 
 // Apply security and parser middlewares
-app.use(cors({ origin: config.CORS_ORIGIN, credentials: true }));
+app.use(cors({ origin: getCorsOrigin(), credentials: true }));
 app.use(helmet());
 app.use(express.json());
 

@@ -26,7 +26,7 @@ const envSchema = z.object({
   JWT_EXPIRES_IN: z.string().default('7d'),
 
   // CORS
-  CORS_ORIGIN: z.string().default('http://localhost:5173'),
+  CORS_ORIGIN: z.string().default('*'),
 
   // Cloudinary (optional — for media uploads)
   CLOUDINARY_CLOUD_NAME: z.string().optional(),
