@@ -14,17 +14,17 @@ import usersRoutes from './modules/users/users.routes.js';
 
 const app = express();
 
-const getCorsOrigin = () => {
-  if (!config.CORS_ORIGIN || config.CORS_ORIGIN === '*') {
-    return true;
-  }
-  const origins = config.CORS_ORIGIN.split(',').map(o => o.trim());
-  return origins.length === 1 ? origins[0] : origins;
+const corsOptions = {
+  origin: (origin, callback) => {
+    // Allow requests with no origin (like mobile apps, curl, Postman) or any origin
+    callback(null, true);
+  },
+  credentials: true
 };
 
 // Apply security and parser middlewares
-app.use(cors({ origin: getCorsOrigin(), credentials: true }));
-app.use(helmet());
+app.use(cors(corsOptions));
+app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
 app.use(express.json());
 
 // Request logger middleware
