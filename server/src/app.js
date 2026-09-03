@@ -16,7 +16,6 @@ const app = express();
 
 const corsOptions = {
   origin: (origin, callback) => {
-    // Allow requests with no origin (like mobile apps, curl, Postman) or any origin
     callback(null, true);
   },
   credentials: true
