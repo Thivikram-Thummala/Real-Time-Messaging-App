@@ -1,4 +1,4 @@
-export const SERVER_URL = import.meta.env.VITE_API_URL || 'https://sharepulse-backend.onrender.com';
+export const SERVER_URL = 'https://sharepulse-backend.onrender.com';
 
 export function getAuthHeader() {
   const token = localStorage.getItem('chat_jwt_token');
