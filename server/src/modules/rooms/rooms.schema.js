@@ -18,5 +18,3 @@ export const createRoomSchema = z.object({
     .boolean()
     .default(false)
 });
-
-export type CreateRoomInput = z.infer<typeof createRoomSchema>;

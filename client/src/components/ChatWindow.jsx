@@ -1,5 +1,5 @@
 import React from 'react';
-import { UserPlus, Users } from 'lucide-react';
+import { UserPlus, Users, LogOut } from 'lucide-react';
 import ChatFeed from './ChatFeed';
 import TypingBanner from './TypingBanner';
 import MessageComposer from './MessageComposer';
@@ -15,7 +15,8 @@ export default function ChatWindow({
   onTypingStop,
   onOpenAddMemberModal,
   onOpenMediaModal,
-  onToggleMembers
+  onToggleMembers,
+  onLeaveRoom
 }) {
   return (
     <div className="chat-window">
@@ -30,16 +31,26 @@ export default function ChatWindow({
           </div>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           {currentRoom && (
-            <button
-              className="sec"
-              onClick={onOpenAddMemberModal}
-              style={{ padding: '0.35rem 0.65rem', fontSize: '0.8rem', borderRadius: '20px' }}
-              title="Add members to room"
-            >
-              <UserPlus size={14} color="var(--primary)" /> <span className="hide-mobile">Add Member</span>
-            </button>
+            <>
+              <button
+                className="sec"
+                onClick={onOpenAddMemberModal}
+                style={{ padding: '0.35rem 0.65rem', fontSize: '0.8rem', borderRadius: '20px' }}
+                title="Add members to room"
+              >
+                <UserPlus size={14} color="var(--primary)" /> <span className="hide-mobile">Add Member</span>
+              </button>
+              <button
+                className="sec"
+                onClick={() => onLeaveRoom(currentRoom)}
+                style={{ padding: '0.35rem 0.65rem', fontSize: '0.8rem', borderRadius: '20px', color: '#ef4444' }}
+                title="Leave Room"
+              >
+                <LogOut size={14} color="#ef4444" /> <span className="hide-mobile">Leave</span>
+              </button>
+            </>
           )}
           <button className="mobile-members-btn" onClick={onToggleMembers} title="Toggle Members">
             <Users size={18} />

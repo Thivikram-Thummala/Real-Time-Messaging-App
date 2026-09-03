@@ -1,4 +1,3 @@
-import { Server as HttpServer } from 'http';
 import { Server } from 'socket.io';
 import { config } from '../config/index.js';
 import { socketAuth } from './middleware/socketAuth.js';
@@ -6,10 +5,10 @@ import { handleConnection } from './handlers/connection.js';
 import { handleRoomEvents } from './handlers/room.js';
 import { handleTypingEvents } from './handlers/typing.js';
 
-let io: Server;
+let io;
 
 // initialize the socket server instance using http server(we created in app.ts)
-export const initSocketServer = (server: HttpServer): Server => {
+export const initSocketServer = (server) => {
   io = new Server(server, {
     cors: {
       origin: config.CORS_ORIGIN,
@@ -36,7 +35,7 @@ export const initSocketServer = (server: HttpServer): Server => {
   return io;
 };
 
-export const getIo = (): Server => {
+export const getIo = () => {
   if (!io) {
     throw new Error('Socket.io instance has not been initialized');
   }

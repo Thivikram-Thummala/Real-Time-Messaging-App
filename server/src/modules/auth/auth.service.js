@@ -4,7 +4,6 @@ import { pool } from '../../config/database.js';
 import { config } from '../../config/index.js';
 import { AppError } from '../../middleware/errorHandler.js';
 import { createUser, findByEmail, findById } from '../../database/queries/users.js';
-import type { RegisterInput, LoginInput } from './auth.schema.js';
 
 export class AuthService {
   /**
@@ -14,7 +13,7 @@ export class AuthService {
    * 3. Insert user into the database
    * 4. Sign and return a JWT token
    */
-  static async register(input: RegisterInput) {
+  static async register(input) {
     const { username, email, password, avatarUrl } = input;
 
     // Check for existing email
@@ -36,7 +35,7 @@ export class AuthService {
       // Strip password_hash from the response
       const { password_hash, ...userProfile } = user;
       return { user: userProfile, token };
-    } catch (err: any) {
+    } catch (err) {
       // PostgreSQL unique constraint violation
       if (err.code === '23505') {
         if (err.constraint?.includes('username')) {
@@ -54,7 +53,7 @@ export class AuthService {
    * 2. Compare password hash with bcrypt
    * 3. Return JWT token
    */
-  static async login(input: LoginInput) {
+  static async login(input) {
     const { email, password } = input;
 
     const result = await findByEmail(pool, email);
@@ -78,7 +77,7 @@ export class AuthService {
   /**
    * Get the profile of the currently authenticated user.
    */
-  static async getProfile(userId: string) {
+  static async getProfile(userId) {
     const result = await findById(pool, userId);
     const user = result.rows[0];
 
@@ -92,7 +91,7 @@ export class AuthService {
   /**
    * Update the profile of the currently authenticated user.
    */
-  static async updateProfile(userId: string, username: string) {
+  static async updateProfile(userId, username) {
     try {
       const { updateProfileQuery } = await import('../../database/queries/users.js');
       const result = await updateProfileQuery(pool, userId, username);
@@ -103,7 +102,7 @@ export class AuthService {
       }
 
       return user;
-    } catch (err: any) {
+    } catch (err) {
       if (err.code === '23505') {
         throw new AppError(409, 'Username already in use');
       }
@@ -114,9 +113,9 @@ export class AuthService {
   /**
    * Sign a JWT with the user's ID and email.
    */
-  private static generateToken(userId: string, email: string): string {
+  static generateToken(userId, email) {
     return jwt.sign({ userId, email }, config.JWT_SECRET, {
-      expiresIn: config.JWT_EXPIRES_IN as any
+      expiresIn: config.JWT_EXPIRES_IN
     });
   }
 }

@@ -11,12 +11,12 @@ export const logger = pino({
   transport:
     config.NODE_ENV !== 'production'
       ? {
-          target: 'pino-pretty',
-          options: {
-            colorize: true,
-            translateTime: 'SYS:standard',
-            ignore: 'pid,hostname'
-          }
+        target: 'pino-pretty',
+        options: {
+          colorize: true,
+          translateTime: 'SYS:standard',
+          ignore: 'pid,hostname'
         }
+      }
       : undefined
 });

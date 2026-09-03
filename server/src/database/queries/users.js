@@ -1,17 +1,13 @@
-import pg from 'pg';
-
-type Pool = pg.Pool;
-
 /**
  * Insert a new user into the database.
  * Password must be pre-hashed before calling this function.
  */
 export const createUser = (
-  pool: Pool,
-  username: string,
-  email: string,
-  passwordHash: string,
-  avatarUrl?: string | null
+  pool,
+  username,
+  email,
+  passwordHash,
+  avatarUrl
 ) =>
   pool.query(
     `INSERT INTO users (username, email, password_hash, avatar_url)
@@ -24,7 +20,7 @@ export const createUser = (
  * Find a user by email address (used during login).
  * Returns the password_hash for bcrypt comparison.
  */
-export const findByEmail = (pool: Pool, email: string) =>
+export const findByEmail = (pool, email) =>
   pool.query(
     `SELECT * FROM users WHERE email = $1`,
     [email]
@@ -33,7 +29,7 @@ export const findByEmail = (pool: Pool, email: string) =>
 /**
  * Find a user by their UUID (used for profile lookups and sender enrichment).
  */
-export const findById = (pool: Pool, id: string) =>
+export const findById = (pool, id) =>
   pool.query(
     `SELECT id, username, email, avatar_url, is_online, last_seen_at, created_at
      FROM users WHERE id = $1`,
@@ -43,7 +39,7 @@ export const findById = (pool: Pool, id: string) =>
 /**
  * Search users by username or email.
  */
-export const searchUsers = (pool: Pool, search: string) =>
+export const searchUsers = (pool, search) =>
   pool.query(
     `SELECT id, username, email, avatar_url, is_online
      FROM users
@@ -56,7 +52,7 @@ export const searchUsers = (pool: Pool, search: string) =>
  * Update a user's online status and last_seen_at timestamp.
  * Called by Socket.io connection/disconnect handlers.
  */
-export const updateOnlineStatus = (pool: Pool, userId: string, isOnline: boolean) =>
+export const updateOnlineStatus = (pool, userId, isOnline) =>
   pool.query(
     `UPDATE users
      SET is_online = $2, last_seen_at = CURRENT_TIMESTAMP
@@ -67,7 +63,7 @@ export const updateOnlineStatus = (pool: Pool, userId: string, isOnline: boolean
 /**
  * Update user profile (username).
  */
-export const updateProfileQuery = (pool: Pool, userId: string, username: string) =>
+export const updateProfileQuery = (pool, userId, username) =>
   pool.query(
     `UPDATE users
      SET username = $2
@@ -75,4 +71,3 @@ export const updateProfileQuery = (pool: Pool, userId: string, username: string)
      RETURNING id, username, email, avatar_url, is_online, last_seen_at, created_at`,
     [userId, username]
   );
-

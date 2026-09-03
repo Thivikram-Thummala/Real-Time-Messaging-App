@@ -38,7 +38,3 @@ export const loginSchema = z.object({
     .string()
     .min(1, 'Password is required')
 });
-
-// Infer TypeScript types from Zod schemas
-export type RegisterInput = z.infer<typeof registerSchema>;
-export type LoginInput = z.infer<typeof loginSchema>;

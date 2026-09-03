@@ -1,8 +1,6 @@
-import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { config } from '../config/index.js';
 import { AppError } from './errorHandler.js';
-import type { AuthPayload } from '../types/index.js';
 
 /**
  * JWT authentication middleware.
@@ -13,9 +11,9 @@ import type { AuthPayload } from '../types/index.js';
  * On failure: throws 401 AppError
  */
 export const authenticate = (
-  req: Request,
-  _res: Response,
-  next: NextFunction
+  req,
+  _res,
+  next
 ) => {
   try {
     const authHeader = req.headers.authorization;
@@ -35,7 +33,7 @@ export const authenticate = (
       return next();
     }
 
-    const decoded = jwt.verify(token, config.JWT_SECRET) as AuthPayload;
+    const decoded = jwt.verify(token, config.JWT_SECRET);
 
     // Attach user info to the request object for downstream handlers
     req.user = {
@@ -44,7 +42,7 @@ export const authenticate = (
     };
 
     next();
-  } catch (err: any) {
+  } catch (err) {
     if (err instanceof AppError) {
       return next(err);
     }

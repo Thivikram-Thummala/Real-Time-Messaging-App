@@ -1,18 +1,14 @@
-import pg from 'pg';
-
-type Pool = pg.Pool;
-
 /**
  * Insert a new message into a room.
  * Returns the full message row including the auto-generated id and created_at.
  */
 export const insertMessage = (
-  pool: Pool,
-  roomId: string,
-  senderId: string,
-  content?: string | null,
-  mediaUrl?: string | null,
-  messageType: string = 'text'
+  pool,
+  roomId,
+  senderId,
+  content,
+  mediaUrl,
+  messageType = 'text'
 ) =>
   pool.query(
     `INSERT INTO messages (room_id, sender_id, content, media_url, message_type)
@@ -36,10 +32,10 @@ export const insertMessage = (
  * @param limit  - Number of messages to fetch (default 50)
  */
 export const getMessagesByRoom = (
-  pool: Pool,
-  roomId: string,
-  cursor?: number | string | null,
-  limit: number = 50
+  pool,
+  roomId,
+  cursor,
+  limit = 50
 ) => {
   if (cursor) {
     return pool.query(

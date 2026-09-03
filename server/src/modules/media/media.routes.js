@@ -1,4 +1,4 @@
-import { Router, Request, Response } from 'express';
+import { Router } from 'express';
 import { authenticate } from '../../middleware/auth.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import multer from 'multer';
@@ -30,7 +30,7 @@ router.use(authenticate);
 router.post(
   '/upload',
   upload.single('file'),
-  asyncHandler(async (req: Request, res: Response) => {
+  asyncHandler(async (req, res) => {
     if (!req.file) {
       res.status(400).json({ success: false, message: 'No file provided' });
       return;
@@ -41,13 +41,13 @@ router.post(
       return;
     }
 
-    const uploadFromBuffer = (buffer: Buffer) => {
-      return new Promise<{ secure_url: string }>((resolve, reject) => {
+    const uploadFromBuffer = (buffer) => {
+      return new Promise((resolve, reject) => {
         const stream = cloudinary.uploader.upload_stream(
           { folder: 'chat_media', resource_type: 'auto' },
           (error, result) => {
             if (result) {
-              resolve(result);
+              resolve(result); // triggers when CDN confirms upload completion
             } else {
               reject(error);
             }

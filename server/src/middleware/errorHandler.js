@@ -1,4 +1,3 @@
-import { Request, Response, NextFunction } from 'express';
 import { logger } from '../utils/logger.js';
 
 /**
@@ -7,13 +6,9 @@ import { logger } from '../utils/logger.js';
  * error handler knows what status to return.
  */
 export class AppError extends Error {
-  public statusCode: number;
-
-  constructor(statusCode: number, message: string) {
+  constructor(statusCode, message) {
     super(message);
     this.statusCode = statusCode;
-    // Preserve the class name in stack traces
-    Object.setPrototypeOf(this, AppError.prototype);
   }
 }
 
@@ -25,10 +20,10 @@ export class AppError extends Error {
  * - Unknown errors    → 500 Internal Server Error
  */
 export const errorHandler = (
-  err: Error | AppError,
-  _req: Request,
-  res: Response,
-  _next: NextFunction
+  err,
+  _req,
+  res,
+  _next
 ) => {
   const statusCode = err instanceof AppError ? err.statusCode : 500;
   const message = err.message || 'Internal Server Error';

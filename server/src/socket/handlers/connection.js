@@ -1,10 +1,8 @@
-
-import { Server as SocketServer, Socket as SocketClient } from 'socket.io';
 import { pool } from '../../config/database.js';
 import { updateOnlineStatus } from '../../database/queries/users.js';
 import { logger } from '../../utils/logger.js';
 
-export const handleConnection = async (io: SocketServer, socket: SocketClient) => {
+export const handleConnection = async (io, socket) => {
   const user = socket.data.user;
   const userId = user.userId;
 
@@ -19,7 +17,7 @@ export const handleConnection = async (io: SocketServer, socket: SocketClient) =
       userId,
       isOnline: true
     });
-  } catch (err: any) {
+  } catch (err) {
     logger.error({ err: err.message, userId }, 'Failed to set user online status');
   }
 
@@ -40,7 +38,7 @@ export const handleConnection = async (io: SocketServer, socket: SocketClient) =
         userId,
         isOnline: false
       });
-    } catch (err: any) {
+    } catch (err) {
       logger.error({ err: err.message, userId }, 'Failed to set user offline status');
     }
   });

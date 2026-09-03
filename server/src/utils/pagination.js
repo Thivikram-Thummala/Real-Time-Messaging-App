@@ -9,10 +9,7 @@
  * @param rows  - Array of database rows (fetched with LIMIT = limit + 1)
  * @param limit - The page size the client requested
  */
-export function buildPaginationResponse<T extends { id: number | string }>(
-  rows: T[],
-  limit: number
-): { data: T[]; nextCursor: string | null; hasMore: boolean } {
+export function buildPaginationResponse(rows, limit) {
   const hasMore = rows.length > limit;
   const data = hasMore ? rows.slice(0, limit) : rows;
   const nextCursor = hasMore && data.length > 0

@@ -15,10 +15,10 @@ export class MessagesService {
    * 4. Emit the enriched message via Socket.io to all clients in the room channel.
    */
   static async sendMessage(
-    roomId: string,
-    senderId: string,
-    content?: string | null,
-    mediaUrl?: string | null,
+    roomId,
+    senderId,
+    content,
+    mediaUrl,
     messageType = 'text'
   ) {
     // 1. Verify room exists
@@ -46,7 +46,7 @@ export class MessagesService {
     try {
       const io = getIo();
       io.to(roomId).emit('message:new', enrichedMessage);
-    } catch (err: any) {
+    } catch (err) {
       // This is expected during startup diagnostics/standalone scripts
     }
 
@@ -56,7 +56,7 @@ export class MessagesService {
   /**
    * Fetch paginated message history for a room.
    */
-  static async getHistory(roomId: string, cursor?: string, limit = 50) {
+  static async getHistory(roomId, cursor, limit = 50) {
     // Verify room exists
     const roomRes = await findRoomById(pool, roomId);
     if (roomRes.rows.length === 0) {

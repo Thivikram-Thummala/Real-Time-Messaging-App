@@ -8,7 +8,6 @@ import {
   addMember,
   removeMember
 } from '../../database/queries/rooms.js';
-import type { CreateRoomInput } from './rooms.schema.js';
 
 export class RoomsService {
   /**
@@ -16,7 +15,7 @@ export class RoomsService {
    * The creator is automatically added as an 'admin' member
    * within the same database transaction (handled in the query layer).
    */
-  static async createRoom(userId: string, input: CreateRoomInput) {
+  static async createRoom(userId, input) {
     const { name, description, isPrivate } = input;
     const result = await createRoomQuery(pool, name, description ?? null, userId, isPrivate);
     return result.rows[0];
@@ -25,7 +24,7 @@ export class RoomsService {
   /**
    * Get all rooms that the authenticated user is a member of.
    */
-  static async getUserRooms(userId: string) {
+  static async getUserRooms(userId) {
     const result = await findUserRooms(pool, userId);
     return result.rows;
   }
@@ -33,7 +32,7 @@ export class RoomsService {
   /**
    * Get a single room by ID, including its member list.
    */
-  static async getRoomById(roomId: string) {
+  static async getRoomById(roomId) {
     const roomResult = await findById(pool, roomId);
     if (roomResult.rows.length === 0) {
       throw new AppError(404, 'Room not found');
@@ -47,12 +46,10 @@ export class RoomsService {
     };
   }
 
-
-
   /**
    * Add a specific target user to a room.
    */
-  static async addMemberToRoom(roomId: string, targetUserId: string) {
+  static async addMemberToRoom(roomId, targetUserId) {
     const roomResult = await findById(pool, roomId);
     if (roomResult.rows.length === 0) {
       throw new AppError(404, 'Room not found');
@@ -70,7 +67,7 @@ export class RoomsService {
   /**
    * Leave a room (remove the user from members).
    */
-  static async leaveRoom(roomId: string, userId: string) {
+  static async leaveRoom(roomId, userId) {
     const result = await removeMember(pool, roomId, userId);
 
     if (result.rowCount === 0) {
@@ -78,5 +75,31 @@ export class RoomsService {
     }
 
     return { message: 'Left room successfully' };
+  }
+
+  static async removeMemberFromRoom(roomId, targetUserId, requestingUserId) {
+    const roomRes = await findById(pool, roomId);
+    if (roomRes.rows.length === 0) {
+      throw new AppError(404, 'Room not found');
+    }
+    const room = roomRes.rows[0];
+
+    const membersRes = await getMembers(pool, roomId);
+    const requestingMember = membersRes.rows.find(m => m.id === requestingUserId);
+
+    const isCreator = room.created_by === requestingUserId;
+    const isAdmin = requestingMember && requestingMember.role === 'admin';
+
+    if (!isCreator && !isAdmin) {
+      throw new AppError(403, 'Only room admins can remove members');
+    }
+
+    const result = await removeMember(pool, roomId, targetUserId);
+
+    if (result.rowCount === 0) {
+      throw new AppError(404, 'Member not found in room');
+    }
+
+    return { message: 'Member removed successfully' };
   }
 }

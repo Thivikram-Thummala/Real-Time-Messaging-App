@@ -7,7 +7,8 @@ import {
   getUserRooms,
   getRoomById,
   addMember,
-  leaveRoom
+  leaveRoom,
+  removeMember
 } from './rooms.controller.js';
 
 const router = Router();
@@ -20,5 +21,6 @@ router.get('/', getUserRooms);
 router.get('/:roomId', getRoomById);
 router.post('/:roomId/members', addMember);
 router.post('/:roomId/leave', leaveRoom);
+router.delete('/:roomId/members/:userId', removeMember);
 
 export default router;

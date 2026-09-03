@@ -1,10 +1,9 @@
-import { Request, Response } from 'express';
 import { MessagesService } from './messages.service.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 
-export const sendMessage = asyncHandler(async (req: Request, res: Response) => {
-  const { roomId } = req.params as { roomId: string };
-  const senderId = req.user!.userId;
+export const sendMessage = asyncHandler(async (req, res) => {
+  const { roomId } = req.params;
+  const senderId = req.user.userId;
   const { content, mediaUrl, messageType } = req.body;
 
   const message = await MessagesService.sendMessage(
@@ -21,13 +20,12 @@ export const sendMessage = asyncHandler(async (req: Request, res: Response) => {
   });
 });
 
-export const getHistory = asyncHandler(async (req: Request, res: Response) => {
-  const { roomId } = req.params as { roomId: string };
+export const getHistory = asyncHandler(async (req, res) => {
+  const { roomId } = req.params;
   const { cursor, limit } = req.query;
 
-  // Validate values via Zod custom parser schema or manual parsing
-  const limitNum = limit ? parseInt(limit as string, 10) : 50;
-  const cursorStr = cursor ? (cursor as string) : undefined;
+  const limitNum = limit ? parseInt(limit, 10) : 50;
+  const cursorStr = cursor ? cursor : undefined;
 
   const history = await MessagesService.getHistory(roomId, cursorStr, limitNum);
 

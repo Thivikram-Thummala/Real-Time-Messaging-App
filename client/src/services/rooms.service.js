@@ -29,3 +29,9 @@ export async function leaveRoom(roomId) {
     method: 'POST'
   });
 }
+
+export async function removeMemberFromRoom(roomId, targetUserId) {
+  return request(`/api/v1/rooms/${roomId}/members/${targetUserId}`, {
+    method: 'DELETE'
+  });
+}

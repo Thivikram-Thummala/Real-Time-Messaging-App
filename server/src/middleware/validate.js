@@ -1,5 +1,4 @@
-import { Request, Response, NextFunction } from 'express';
-import { ZodSchema, ZodError } from 'zod';
+import { ZodError } from 'zod';
 
 /**
  * Zod validation middleware factory.
@@ -11,8 +10,8 @@ import { ZodSchema, ZodError } from 'zod';
  * Usage:
  *   router.post('/register', validate(registerSchema), controller);
  */
-export const validate = (schema: ZodSchema) => {
-  return (req: Request, res: Response, next: NextFunction) => {
+export const validate = (schema) => {
+  return (req, res, next) => {
     try {
       // Parse and replace req.body with the validated data
       req.body = schema.parse(req.body);

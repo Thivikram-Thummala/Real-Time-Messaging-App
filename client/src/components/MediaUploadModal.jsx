@@ -1,18 +1,19 @@
 import React, { useState } from 'react';
-import { X, Image, Link } from 'lucide-react';
+import { X, Image, Upload } from 'lucide-react';
 import { uploadMedia } from '../services';
 
 export default function MediaUploadModal({ isOpen, onClose, onAttachMedia }) {
-  const [imageUrl, setImageUrl] = useState('');
   const [selectedFile, setSelectedFile] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
   if (!isOpen) return null;
+
   async function handleSubmit(e) {
     e.preventDefault();
-    if (!imageUrl.trim() && !selectedFile) {
-      setError('Please provide or pick an image.');
+    if (!selectedFile) {
+      setError('Please choose a file to upload.');
       return;
     }
 
@@ -20,25 +21,35 @@ export default function MediaUploadModal({ isOpen, onClose, onAttachMedia }) {
     setError('');
 
     try {
-      let finalUrl = imageUrl.trim();
-
-      if (selectedFile) {
-        const res = await uploadMedia(selectedFile);
-        if (res.success && res.data?.url) {
-          finalUrl = res.data.url;
-        } else {
-          throw new Error(res.message || 'Failed to upload media');
-        }
+      const res = await uploadMedia(selectedFile);
+      if (res.success && res.data?.url) {
+        onAttachMedia(res.data.url);
+        setSelectedFile(null);
+        setPreviewUrl(null);
+        onClose();
+      } else {
+        throw new Error(res.message || 'Failed to upload media');
       }
-
-      onAttachMedia(finalUrl);
-      setImageUrl('');
-      setSelectedFile(null);
-      onClose();
     } catch (err) {
       setError(`Upload failed: ${err.message}`);
     } finally {
       setLoading(false);
+    }
+  }
+
+  function handleFileChange(e) {
+    const file = e.target.files?.[0];
+    if (file) {
+      setSelectedFile(file);
+      setError('');
+      if (file.type.startsWith('image/')) {
+        setPreviewUrl(URL.createObjectURL(file));
+      } else {
+        setPreviewUrl(null);
+      }
+    } else {
+      setSelectedFile(null);
+      setPreviewUrl(null);
     }
   }
 
@@ -56,43 +67,20 @@ export default function MediaUploadModal({ isOpen, onClose, onAttachMedia }) {
 
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '0.75rem' }}>
           <div className="form-group">
-            <label htmlFor="mediaUrl">Image URL *</label>
-            <div style={{ position: 'relative' }}>
-              <Link size={16} color="var(--text-muted)" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
-              <input
-                id="mediaUrl"
-                type="url"
-                placeholder="https://example.com/image.jpg"
-                value={imageUrl}
-                onChange={(e) => setImageUrl(e.target.value)}
-                style={{ width: '100%', paddingLeft: '2.2rem' }}
-                autoFocus
-              />
-            </div>
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="fileInput">Or pick from device</label>
+            <label htmlFor="fileInput">Select file from device *</label>
             <input
               id="fileInput"
               type="file"
               accept="image/*,video/*"
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) {
-                  setSelectedFile(file);
-                  setImageUrl(URL.createObjectURL(file));
-                } else {
-                  setSelectedFile(null);
-                }
-              }}
+              onChange={handleFileChange}
               style={{ width: '100%' }}
+              autoFocus
             />
           </div>
 
-          {imageUrl && (
+          {previewUrl && (
             <div style={{ background: 'var(--bg)', padding: '0.5rem', borderRadius: '8px', border: '1px solid var(--border)', textAlign: 'center' }}>
-              <img src={imageUrl} alt="Preview" style={{ maxHeight: '140px', borderRadius: '6px', maxWidth: '100%' }} />
+              <img src={previewUrl} alt="Preview" style={{ maxHeight: '140px', borderRadius: '6px', maxWidth: '100%' }} />
             </div>
           )}
 
@@ -106,8 +94,8 @@ export default function MediaUploadModal({ isOpen, onClose, onAttachMedia }) {
             <button type="button" className="sec" onClick={onClose} style={{ flex: 1 }} disabled={loading}>
               Cancel
             </button>
-            <button type="submit" style={{ flex: 1 }} disabled={loading}>
-              {loading ? 'Uploading...' : 'Attach Image'}
+            <button type="submit" style={{ flex: 1 }} disabled={loading || !selectedFile}>
+              {loading ? 'Uploading...' : 'Upload & Attach'}
             </button>
           </div>
         </form>

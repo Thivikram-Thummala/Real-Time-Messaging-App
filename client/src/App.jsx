@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { getMe, login, register, getRooms, getRoomById, getMessages, sendMessage, connectSocket, disconnectSocket } from './services';
+import { getMe, login, register, getRooms, getRoomById, getMessages, sendMessage, leaveRoom, removeMemberFromRoom, connectSocket, disconnectSocket } from './services';
 import Sidebar from './components/Sidebar';
 import ChatWindow from './components/ChatWindow';
 import MembersList from './components/MembersList';
@@ -7,6 +7,7 @@ import CreateRoomModal from './components/CreateRoomModal';
 import ProfileModal from './components/ProfileModal';
 import AddMemberModal from './components/AddMemberModal';
 import MediaUploadModal from './components/MediaUploadModal';
+import ConfirmModal from './components/ConfirmModal';
 import { LogOut, ShieldCheck, Menu } from 'lucide-react';
 
 export default function App() {
@@ -31,12 +32,25 @@ export default function App() {
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
   const [isMediaModalOpen, setIsMediaModalOpen] = useState(false);
+  const [confirmState, setConfirmState] = useState({
+    isOpen: false,
+    title: '',
+    message: '',
+    confirmText: 'Confirm',
+    confirmVariant: 'danger',
+    onConfirm: null
+  });
   
   // Mobile Responsive States
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [isMobileMembersOpen, setIsMobileMembersOpen] = useState(false);
 
   const socketRef = useRef(null);
+  const currentRoomRef = useRef(currentRoom);
+
+  useEffect(() => {
+    currentRoomRef.current = currentRoom;
+  }, [currentRoom]);
 
   // Restore Session on Mount
   useEffect(() => {
@@ -76,10 +90,12 @@ export default function App() {
 
     // Attach socket listeners
     socket.on('message:new', (newMsg) => {
-      setMessages(prev => {
-        if (prev.some(m => m.id === newMsg.id)) return prev;
-        return [...prev, newMsg];
-      });
+      if (currentRoomRef.current && newMsg.room_id === currentRoomRef.current.id) {
+        setMessages(prev => {
+          if (prev.some(m => m.id === newMsg.id)) return prev;
+          return [...prev, newMsg];
+        });
+      }
     });
 
     socket.on('typing:update', (data) => {
@@ -112,8 +128,10 @@ export default function App() {
       const res = await getRooms();
       if (res.success && Array.isArray(res.data)) {
         setRooms(res.data);
-        if (res.data.length > 0 && !currentRoom) {
-          handleSelectRoom(res.data[0]);
+        if (res.data.length > 0) {
+          const savedRoomId = localStorage.getItem('chat_active_room_id');
+          const targetRoom = res.data.find(r => r.id === savedRoomId) || res.data[0];
+          handleSelectRoom(targetRoom);
         }
       }
     } catch (err) {
@@ -122,11 +140,12 @@ export default function App() {
   }
 
   async function handleSelectRoom(room) {
-    if (currentRoom && socketRef.current) {
-      socketRef.current.emit('room:leave', { roomId: currentRoom.id });
+    if (currentRoomRef.current && socketRef.current) {
+      socketRef.current.emit('room:leave', { roomId: currentRoomRef.current.id });
     }
 
     setCurrentRoom(room);
+    localStorage.setItem('chat_active_room_id', room.id);
     setMessages([]);
     setTypingText('');
 
@@ -141,8 +160,11 @@ export default function App() {
         getRoomById(room.id)
       ]);
 
-      if (msgRes.success && Array.isArray(msgRes.data)) {
-        setMessages(msgRes.data.reverse());
+      if (msgRes.success) {
+        const rawList = Array.isArray(msgRes.data)
+          ? msgRes.data
+          : (msgRes.data?.data && Array.isArray(msgRes.data.data) ? msgRes.data.data : []);
+        setMessages([...rawList].reverse());
       }
       if (roomRes.success && roomRes.data?.members) {
         setMembers(roomRes.data.members);
@@ -236,6 +258,68 @@ export default function App() {
     setAuthModalOpen(true);
   }
 
+  function triggerLogoutConfirm() {
+    setConfirmState({
+      isOpen: true,
+      title: 'Confirm Logout',
+      message: 'Are you sure you want to log out of SharePulse?',
+      confirmText: 'Log Out',
+      confirmVariant: 'danger',
+      onConfirm: () => {
+        setConfirmState(prev => ({ ...prev, isOpen: false }));
+        handleLogout();
+      }
+    });
+  }
+
+  function triggerLeaveRoomConfirm(room) {
+    setConfirmState({
+      isOpen: true,
+      title: 'Leave Room',
+      message: `Are you sure you want to leave #${room.name}?`,
+      confirmText: 'Leave Room',
+      confirmVariant: 'danger',
+      onConfirm: async () => {
+        setConfirmState(prev => ({ ...prev, isOpen: false }));
+        try {
+          const res = await leaveRoom(room.id);
+          if (res.success) {
+            handleRoomLeft(room.id);
+          } else {
+            alert(`Failed to leave room: ${res.message}`);
+          }
+        } catch (err) {
+          alert(`Server error: ${err.message}`);
+        }
+      }
+    });
+  }
+
+  function triggerRemoveMemberConfirm(member) {
+    if (!currentRoom) return;
+    setConfirmState({
+      isOpen: true,
+      title: 'Remove Member',
+      message: `Are you sure you want to remove @${member.username} from #${currentRoom.name}?`,
+      confirmText: 'Remove Member',
+      confirmVariant: 'danger',
+      onConfirm: async () => {
+        setConfirmState(prev => ({ ...prev, isOpen: false }));
+        try {
+          const targetId = member.id || member.userId;
+          const res = await removeMemberFromRoom(currentRoom.id, targetId);
+          if (res.success) {
+            setMembers(prev => prev.filter(m => m.id !== targetId && m.userId !== targetId));
+          } else {
+            alert(`Failed to remove member: ${res.message}`);
+          }
+        } catch (err) {
+          alert(`Server error: ${err.message}`);
+        }
+      }
+    });
+  }
+
   async function handleSendMessage(content, mediaUrl = null) {
     if ((!content && !mediaUrl) || !currentRoom) return;
 
@@ -266,7 +350,7 @@ export default function App() {
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden' }}>
       
       {/* App Header */}
       <header>
@@ -274,7 +358,7 @@ export default function App() {
           <button className="mobile-menu-btn" onClick={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)}>
             <Menu size={20} />
           </button>
-          <h1><span>⚡</span> Distributed Chat (React)</h1>
+          <h1><span>⚡</span> SharePulse</h1>
         </div>
         
         {currentUser && (
@@ -292,7 +376,7 @@ export default function App() {
                 <span className="profile-email">{currentUser.email}</span>
               </div>
             </div>
-            <button className="sec" onClick={handleLogout} style={{ padding: '0.3rem 0.65rem', fontSize: '0.8rem', borderRadius: '20px' }}>
+            <button className="sec" onClick={triggerLogoutConfirm} style={{ padding: '0.3rem 0.65rem', fontSize: '0.8rem', borderRadius: '20px' }}>
               <LogOut size={14} /> Logout
             </button>
           </div>
@@ -311,6 +395,7 @@ export default function App() {
           onSelectRoom={(r) => { handleSelectRoom(r); setIsMobileSidebarOpen(false); }}
           onOpenCreateModal={() => setIsCreateRoomOpen(true)}
           onRoomLeft={handleRoomLeft}
+          onRequestLeaveRoom={triggerLeaveRoomConfirm}
         />
 
         {/* Center Chat Window Component */}
@@ -326,13 +411,17 @@ export default function App() {
           onOpenAddMemberModal={() => setIsAddMemberOpen(true)}
           onOpenMediaModal={() => setIsMediaModalOpen(true)}
           onToggleMembers={() => setIsMobileMembersOpen(!isMobileMembersOpen)}
+          onLeaveRoom={triggerLeaveRoomConfirm}
         />
 
         {/* Right Members Sidebar (Phase 4 Component) */}
         <MembersList 
-          members={members} 
+          members={members}
+          currentRoom={currentRoom}
+          currentUser={currentUser}
           isOpen={isMobileMembersOpen}
           onClose={() => setIsMobileMembersOpen(false)}
+          onRemoveMember={triggerRemoveMemberConfirm}
         />
 
       </div>
@@ -365,12 +454,22 @@ export default function App() {
         onAttachMedia={handleAttachMedia}
       />
 
+      <ConfirmModal
+        isOpen={confirmState.isOpen}
+        title={confirmState.title}
+        message={confirmState.message}
+        confirmText={confirmState.confirmText}
+        confirmVariant={confirmState.confirmVariant}
+        onConfirm={confirmState.onConfirm}
+        onCancel={() => setConfirmState(prev => ({ ...prev, isOpen: false }))}
+      />
+
       {/* Auth Modal Overlay */}
       {authModalOpen && (
         <div className="modal-overlay">
           <div className="auth-modal">
             <h2 style={{ fontSize: '1.35rem', fontWeight: 700, textAlign: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem' }}>
-              <ShieldCheck color="var(--primary)" /> Distributed Chat
+              <ShieldCheck color="var(--primary)" /> SharePulse
             </h2>
 
             {/* Auth Tabs */}

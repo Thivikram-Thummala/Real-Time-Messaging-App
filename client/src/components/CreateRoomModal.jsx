@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
-import { X, Plus, Lock, Globe } from 'lucide-react';
+import { X, Plus, MessageSquare } from 'lucide-react';
 import { createRoom } from '../services';
 
 export default function CreateRoomModal({ isOpen, onClose, onRoomCreated }) {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
-  const [isPrivate, setIsPrivate] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -22,11 +21,10 @@ export default function CreateRoomModal({ isOpen, onClose, onRoomCreated }) {
     setError('');
 
     try {
-      const res = await createRoom(name.trim(), description.trim() || 'Public channel', isPrivate);
+      const res = await createRoom(name.trim(), description.trim() || 'Chat room', false);
       if (res.success && res.data) {
         setName('');
         setDescription('');
-        setIsPrivate(false);
         onRoomCreated(res.data);
         onClose();
       } else {
@@ -46,7 +44,7 @@ export default function CreateRoomModal({ isOpen, onClose, onRoomCreated }) {
           <h2 style={{ fontSize: '1.25rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <Plus color="var(--primary)" size={20} /> Create New Room
           </h2>
-          <button onClick={onClose} class="sec" style={{ padding: '0.3rem', borderRadius: '50%' }}>
+          <button onClick={onClose} className="sec" style={{ padding: '0.3rem', borderRadius: '50%' }}>
             <X size={16} />
           </button>
         </div>
@@ -73,20 +71,6 @@ export default function CreateRoomModal({ isOpen, onClose, onRoomCreated }) {
               value={description}
               onChange={(e) => setDescription(e.target.value)}
             />
-          </div>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', background: 'var(--bg)', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--border)' }}>
-            <input
-              id="isPrivate"
-              type="checkbox"
-              checked={isPrivate}
-              onChange={(e) => setIsPrivate(e.target.checked)}
-              style={{ width: '18px', height: '18px', cursor: 'pointer' }}
-            />
-            <label htmlFor="isPrivate" style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--text)' }}>
-              {isPrivate ? <Lock size={14} color="var(--warning)" /> : <Globe size={14} color="var(--success)" />}
-              <span>Make Room Private</span>
-            </label>
           </div>
 
           {error && (

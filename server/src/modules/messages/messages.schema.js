@@ -29,6 +29,3 @@ export const getHistoryQuerySchema = z.object({
     .max(100)
     .default(50)
 });
-
-export type SendMessageInput = z.infer<typeof sendMessageSchema>;
-export type GetHistoryQuery = z.infer<typeof getHistoryQuerySchema>;

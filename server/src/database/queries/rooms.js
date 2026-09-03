@@ -1,18 +1,14 @@
-import pg from 'pg';
-
-type Pool = pg.Pool;
-
 /**
  * Create a new room and automatically add the creator as an 'admin' member.
  * Wrapped in a SQL transaction for atomicity — if member insertion fails,
  * the room creation is also rolled back.
  */
 export const createRoom = async (
-  pool: Pool,
-  name: string,
-  description: string | null,
-  createdBy: string,
-  isPrivate: boolean = false
+  pool,
+  name,
+  description,
+  createdBy,
+  isPrivate = false
 ) => {
   const client = await pool.connect();
   try {
@@ -48,7 +44,7 @@ export const createRoom = async (
  * List all rooms that a specific user is a member of.
  * JOINs room_members with rooms to return full room details.
  */
-export const findUserRooms = (pool: Pool, userId: string) =>
+export const findUserRooms = (pool, userId) =>
   pool.query(
     `SELECT r.*, rm.role, rm.joined_at AS member_since
      FROM rooms r
@@ -61,7 +57,7 @@ export const findUserRooms = (pool: Pool, userId: string) =>
 /**
  * Find a single room by its UUID.
  */
-export const findById = (pool: Pool, roomId: string) =>
+export const findById = (pool, roomId) =>
   pool.query(
     `SELECT * FROM rooms WHERE id = $1`,
     [roomId]
@@ -70,7 +66,7 @@ export const findById = (pool: Pool, roomId: string) =>
 /**
  * Get all members of a room, with user profile info.
  */
-export const getMembers = (pool: Pool, roomId: string) =>
+export const getMembers = (pool, roomId) =>
   pool.query(
     `SELECT u.id, u.username, u.avatar_url, u.is_online, rm.role, rm.joined_at
      FROM room_members rm
@@ -84,7 +80,7 @@ export const getMembers = (pool: Pool, roomId: string) =>
  * Add a user as a member of a room.
  * Uses ON CONFLICT to silently ignore if already a member.
  */
-export const addMember = (pool: Pool, roomId: string, userId: string, role: string = 'member') =>
+export const addMember = (pool, roomId, userId, role = 'member') =>
   pool.query(
     `INSERT INTO room_members (room_id, user_id, role)
      VALUES ($1, $2, $3)
@@ -96,7 +92,7 @@ export const addMember = (pool: Pool, roomId: string, userId: string, role: stri
 /**
  * Remove a user from a room.
  */
-export const removeMember = (pool: Pool, roomId: string, userId: string) =>
+export const removeMember = (pool, roomId, userId) =>
   pool.query(
     `DELETE FROM room_members
      WHERE room_id = $1 AND user_id = $2`,

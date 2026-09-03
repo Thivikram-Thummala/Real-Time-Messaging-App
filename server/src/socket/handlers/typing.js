@@ -1,6 +1,4 @@
-import { Server, Socket } from 'socket.io';
-
-export const handleTypingEvents = (io: Server, socket: Socket) => {
+export const handleTypingEvents = (io, socket) => {
   const user = socket.data.user;
 
   socket.on('typing:start', ({ roomId }) => {

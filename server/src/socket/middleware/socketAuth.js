@@ -1,18 +1,16 @@
 import jwt from 'jsonwebtoken';
-import { Socket } from 'socket.io';
 import { config } from '../../config/index.js';
 import { pool } from '../../config/database.js';
 import { findById } from '../../database/queries/users.js';
-import type { AuthPayload } from '../../types/index.js';
 
-export const socketAuth = async (socket: Socket, next: (err?: Error) => void) => {
+export const socketAuth = async (socket, next) => {
   try {
     const authHeader =
       socket.handshake.auth?.token ||
       socket.handshake.headers?.authorization ||
-      (socket.handshake.query?.token as string) ||
-      (socket.handshake.query?.authorization as string) ||
-      (socket.handshake.query?.auth as string);
+      socket.handshake.query?.token ||
+      socket.handshake.query?.authorization ||
+      socket.handshake.query?.auth;
 
     if (!authHeader) {
       return next(new Error('Authentication error: Token is required'));
@@ -33,7 +31,7 @@ export const socketAuth = async (socket: Socket, next: (err?: Error) => void) =>
       return next();
     }
 
-    const decoded = jwt.verify(token, config.JWT_SECRET) as AuthPayload;
+    const decoded = jwt.verify(token, config.JWT_SECRET);
 
     // Fetch user username from database to attach to socket metadata
     const userRes = await findById(pool, decoded.userId);
@@ -51,7 +49,7 @@ export const socketAuth = async (socket: Socket, next: (err?: Error) => void) =>
     };
 
     next();
-  } catch (err: any) {
+  } catch (err) {
     console.error('Socket authentication failed:', err.message);
     next(new Error('Authentication error: Invalid or expired token'));
   }
