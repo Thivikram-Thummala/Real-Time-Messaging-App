@@ -1,4 +1,4 @@
-export const SERVER_URL = 'http://localhost:3001';
+export const SERVER_URL = 'https://sharepulse-backend.onrender.com';
 
 export function getAuthHeader() {
   const token = localStorage.getItem('chat_jwt_token');
