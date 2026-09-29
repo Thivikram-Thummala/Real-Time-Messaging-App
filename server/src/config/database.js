@@ -11,12 +11,16 @@ const isProductionOrRemote =
  * PostgreSQL connection pool.
  * Uses the DATABASE_URL from .env and configures pool size limits.
  * SSL is enabled when connecting to remote hosts (e.g. Render, Supabase).
+ * 
+ * For Supabase + Render: Force IPv4 to avoid IPv6 resolution issues
  */
 export const pool = new Pool({
   connectionString: config.DATABASE_URL,
   min: config.DB_POOL_MIN,
   max: config.DB_POOL_MAX,
-  ssl: isProductionOrRemote ? { rejectUnauthorized: false } : false
+  ssl: isProductionOrRemote ? { rejectUnauthorized: false } : false,
+  // Force IPv4 for Supabase + Render compatibility
+  family: 4
 });
 
 pool.on('error', (err) => {
