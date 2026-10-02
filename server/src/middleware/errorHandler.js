@@ -21,18 +21,26 @@ export class AppError extends Error {
  */
 export const errorHandler = (
   err,
-  _req,
+  req,
   res,
   _next
 ) => {
   const statusCode = err instanceof AppError ? err.statusCode : 500;
   const message = err.message || 'Internal Server Error';
+  const userId = req?.user?.userId || 'anonymous';
+  const routeStr = req ? `[${req.method} ${req.originalUrl || req.url}]` : '[Unknown Route]';
 
-  // Log the full error in development, just the message in production
+  // Log detailed error context with HTTP method, route, and user ID
   if (statusCode >= 500) {
-    logger.error({ err, statusCode }, 'Server error');
+    logger.error(
+      { err, statusCode, method: req?.method, route: req?.originalUrl, userId },
+      `[SERVER ERROR ${statusCode}] on ${routeStr} by User [${userId}]: ${message}`
+    );
   } else {
-    logger.warn({ statusCode, message }, 'Client error');
+    logger.warn(
+      { statusCode, message, method: req?.method, route: req?.originalUrl, userId },
+      `[CLIENT ERROR ${statusCode}] on ${routeStr} by User [${userId}]: ${message}`
+    );
   }
 
   res.status(statusCode).json({

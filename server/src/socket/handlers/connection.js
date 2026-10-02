@@ -1,12 +1,20 @@
 import { pool } from '../../config/database.js';
 import { updateOnlineStatus } from '../../database/queries/users.js';
 import { logger } from '../../utils/logger.js';
+import { socketActiveConnections } from '../../utils/metrics.js';
 
 export const handleConnection = async (io, socket) => {
   const user = socket.data.user;
   const userId = user.userId;
 
-  logger.info({ socketId: socket.id, userId, username: user.username }, 'Real-time client connected');
+  // Increment active sockets counter gauge
+  socketActiveConnections.inc();
+
+  const username = user.username || 'User';
+  logger.info(
+    { socketId: socket.id, userId, username },
+    `Socket client connected for User [${username}] (ID: ${userId}, Socket: ${socket.id})`
+  );
 
   try {
     // 1. Mark user as online in database
@@ -18,12 +26,21 @@ export const handleConnection = async (io, socket) => {
       isOnline: true
     });
   } catch (err) {
-    logger.error({ err: err.message, userId }, 'Failed to set user online status');
+    logger.error(
+      { err: err.message, userId, username },
+      `Failed to set online status for User [${username}] (ID: ${userId}): ${err.message}`
+    );
   }
 
   // Handle disconnection
-  socket.on('disconnect', async () => {
-    logger.info({ socketId: socket.id, userId }, 'Real-time client disconnected');
+  socket.on('disconnect', async (reason) => {
+    // Decrement active sockets counter gauge
+    socketActiveConnections.dec();
+
+    logger.info(
+      { socketId: socket.id, userId, username, reason },
+      `Socket client disconnected for User [${username}] (ID: ${userId}, Socket: ${socket.id}, Reason: ${reason})`
+    );
 
     try {
       // Mark user as offline in database
@@ -39,7 +56,10 @@ export const handleConnection = async (io, socket) => {
         isOnline: false
       });
     } catch (err) {
-      logger.error({ err: err.message, userId }, 'Failed to set user offline status');
+      logger.error(
+        { err: err.message, userId, username },
+        `Failed to set offline status for User [${username}] (ID: ${userId}): ${err.message}`
+      );
     }
   });
 };

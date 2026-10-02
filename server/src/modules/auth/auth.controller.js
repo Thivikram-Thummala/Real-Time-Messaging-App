@@ -1,5 +1,6 @@
 import { AuthService } from './auth.service.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
+import { logger } from '../../utils/logger.js';
 
 /**
  * POST /api/v1/auth/register
@@ -7,6 +8,11 @@ import { asyncHandler } from '../../utils/asyncHandler.js';
  */
 export const register = asyncHandler(async (req, res) => {
   const result = await AuthService.register(req.body);
+
+  logger.info(
+    { userId: result.user.id, email: result.user.email, username: result.user.username },
+    `New user registered [${result.user.email}] (ID: ${result.user.id})`
+  );
 
   res.status(201).json({
     success: true,
@@ -21,6 +27,11 @@ export const register = asyncHandler(async (req, res) => {
 export const login = asyncHandler(async (req, res) => {
   const result = await AuthService.login(req.body);
 
+  logger.info(
+    { userId: result.user.id, email: result.user.email, username: result.user.username },
+    `User [${result.user.email}] (ID: ${result.user.id}) logged in successfully`
+  );
+
   res.status(200).json({
     success: true,
     data: result
@@ -33,6 +44,11 @@ export const login = asyncHandler(async (req, res) => {
  */
 export const getProfile = asyncHandler(async (req, res) => {
   const profile = await AuthService.getProfile(req.user.userId);
+
+  logger.debug(
+    { userId: req.user.userId },
+    `Session restored for User [${profile.email || req.user.userId}]`
+  );
 
   res.status(200).json({
     success: true,
@@ -51,6 +67,11 @@ export const updateProfile = asyncHandler(async (req, res) => {
     return;
   }
   const profile = await AuthService.updateProfile(req.user.userId, username);
+
+  logger.info(
+    { userId: req.user.userId, newUsername: username },
+    `User (ID: ${req.user.userId}) updated profile username to [${username}]`
+  );
 
   res.status(200).json({
     success: true,

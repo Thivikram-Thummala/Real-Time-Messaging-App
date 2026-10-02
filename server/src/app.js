@@ -1,9 +1,17 @@
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import { config } from './config/index.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import { logger } from './utils/logger.js';
+import { register, metricsMiddleware } from './utils/metrics.js';
+
+// 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const metricsDashboardPath = path.resolve(__dirname, '../../metrics_dashboard');
 
 // Import Feature Routers
 import authRoutes from './modules/auth/auth.routes.js';
@@ -26,20 +34,33 @@ app.use(cors(corsOptions));
 app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
 app.use(express.json());
 
+// Metrics collection middleware
+app.use(metricsMiddleware);
+
+// Serve local metrics visualizer dashboard UI
+app.use('/metrics/ui', express.static(metricsDashboardPath));
+app.get('/metrics/ui', (req, res) => {
+  res.sendFile(path.join(metricsDashboardPath, 'index.html'));
+});
+
 // Request logger middleware
 app.use((req, res, next) => {
   const start = Date.now();
   res.on('finish', () => {
     const duration = Date.now() - start;
+    const userId = req.user?.userId || 'anonymous';
+    const userMsg = userId !== 'anonymous' ? `by User [${userId}]` : 'by Anonymous User';
+    
     logger.info(
       {
         method: req.method,
         url: req.originalUrl,
         status: res.statusCode,
         duration: `${duration}ms`,
+        userId,
         ip: req.ip
       },
-      'HTTP request completed'
+      `[${req.method} ${req.originalUrl}] completed in ${duration}ms (Status ${res.statusCode}) ${userMsg}`
     );
   });
   next();
@@ -51,6 +72,16 @@ app.get('/health', (req, res) => {
     status: 'ok',
     serverId: config.SERVER_ID
   });
+});
+
+// Prometheus metrics exposition endpoint
+app.get('/metrics', async (req, res) => {
+  try {
+    res.set('Content-Type', register.contentType);
+    res.end(await register.metrics());
+  } catch (err) {
+    res.status(500).send(err.message);
+  }
 });
 
 // Mount Feature Routers

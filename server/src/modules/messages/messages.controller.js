@@ -1,5 +1,6 @@
 import { MessagesService } from './messages.service.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
+import { logger } from '../../utils/logger.js';
 
 export const sendMessage = asyncHandler(async (req, res) => {
   const { roomId } = req.params;
@@ -12,6 +13,11 @@ export const sendMessage = asyncHandler(async (req, res) => {
     content,
     mediaUrl,
     messageType
+  );
+
+  logger.info(
+    { senderId, roomId, messageId: message.id, hasMedia: Boolean(mediaUrl) },
+    `User (ID: ${senderId}) sent message (ID: ${message.id}) in room (ID: ${roomId})`
   );
 
   res.status(201).json({
